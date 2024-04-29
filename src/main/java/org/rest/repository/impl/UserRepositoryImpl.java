@@ -1,22 +1,26 @@
 package org.rest.repository.impl;
 
-import org.rest.db.ConnectionManager;
-import org.rest.db.ConnectionManagerImpl;
 import org.rest.exception.RepositoryException;
 import org.rest.model.User;
 import org.rest.repository.CityRepository;
 import org.rest.repository.UserRepository;
 import org.rest.repository.UserToBankRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.PreparedStatement;
 import java.util.List;
 
+@Repository
 public class UserRepositoryImpl implements UserRepository {
 
     private static final String SAVE_SQL = """
             INSERT INTO users (user_name, city_id)
-            VALUES (?, ?) ;
+            VALUES (?, ?) 
+            RETURNING user_id;
             """;
     private static final String FIND_BY_ID_SQL = """
             SELECT * FROM users
@@ -43,114 +47,69 @@ public class UserRepositoryImpl implements UserRepository {
                         WHERE user_id = ?
                         LIMIT 1);
             """;
-    private ConnectionManager connectionManager = ConnectionManagerImpl.getInstance();
-    private static UserRepository instance;
-    private final CityRepository cityRepository = CityRepositoryImpl.getInstance();
-    private final UserToBankRepository userToBankRepository = UserToBankRepositoryImpl.getInstance();
+    private CityRepository cityRepository;
+    private UserToBankRepository userToBankRepository;
+    private JdbcTemplate jdbcTemplate;
 
+
+    @Autowired
+    public UserRepositoryImpl(CityRepositoryImpl cityRepository, UserToBankRepository userToBankRepository,JdbcTemplate jdbcTemplate) {
+        this.cityRepository = cityRepository;
+        this.userToBankRepository = userToBankRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
     public UserRepositoryImpl() {
-    }
-    public UserRepositoryImpl(String url,String username, String password){
-        connectionManager = new ConnectionManagerImpl(url, username, password);
-    }
-    public static synchronized UserRepository getInstance() {
-        if (instance == null) {
-            instance = new UserRepositoryImpl();
-        }
-        return instance;
     }
 
     @Override
     public User save(User user) {
-        try(Connection connection = connectionManager.getConnection();
-            PreparedStatement preparedStatement =connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
-            preparedStatement.setString(1, user.getName());
-            preparedStatement.setLong(2, user.getCity().getId());
-            preparedStatement.executeUpdate();
-            ResultSet resultSet = preparedStatement.getGeneratedKeys();
-            if (resultSet.next()) {
-                user = new User(resultSet.getLong("user_id"), user.getName(), user.getCity(), null);
-            }
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(SAVE_SQL, new String[]{"user_id"});
+            ps.setString(1, user.getName());
+            ps.setLong(2, user.getCity().getId());
+            return ps;
+        }, keyHolder);
+
+        Long id = keyHolder.getKey().longValue();
+        user.setId(id);
+
         return user;
     }
 
     @Override
     public User findById(Long id) {
-        User user = null;
-        try(Connection connection = connectionManager.getConnection();
-            PreparedStatement preparedStatement =connection.prepareStatement(FIND_BY_ID_SQL)){
-            preparedStatement.setLong(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next())
-                user = new User(resultSet.getLong("user_id"), resultSet.getString("user_name"),
-                        cityRepository.findById(resultSet.getLong("city_id")),
-                        userToBankRepository.findBanksByUserId(resultSet.getLong("user_id")));
-        }catch (SQLException e){
-            throw new RepositoryException(e);
-        }
-        return user;
+        return jdbcTemplate.queryForObject(FIND_BY_ID_SQL, (rs, rowNum) ->
+                new User(rs.getLong("user_id"), rs.getString("user_name"),
+                        cityRepository.findById(rs.getLong("city_id")),
+                        userToBankRepository.findBanksByUserId(rs.getLong("user_id"))), id);
     }
 
     @Override
     public List<User> findAll() {
-        List<User> userList = new ArrayList<>();
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(FIND_ALL_SQL)) {
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                userList.add(new User(resultSet.getLong("user_id"), resultSet.getString("user_name"),
-                        cityRepository.findById(resultSet.getLong("city_id")), null));
-            }
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return userList;
+        return jdbcTemplate.query(FIND_ALL_SQL,(rs, rowNum) ->
+                new User(rs.getLong("user_id"), rs.getString("user_name"),
+                        cityRepository.findById(rs.getLong("city_id")),
+                        userToBankRepository.findBanksByUserId(rs.getLong("user_id"))));
     }
 
     @Override
     public void update(User user) {
-        try(Connection connection = connectionManager.getConnection();
-            PreparedStatement preparedStatement =connection.prepareStatement(UPDATE_SQL)){
-            preparedStatement.setString(1, user.getName());
-            preparedStatement.setLong(2, user.getCity().getId());
-            preparedStatement.setLong(3, user.getId());
-            preparedStatement.executeUpdate();
-        }catch (SQLException e){
-            throw new RepositoryException(e);
-        }
+        jdbcTemplate.update(UPDATE_SQL, user.getName(), user.getCity().getId(), user.getId());
     }
 
     @Override
     public boolean deleteById(Long id) {
-        boolean deleteResult;
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL);) {
-            userToBankRepository.deleteByUserId(id);
-            preparedStatement.setLong(1, id);
-            deleteResult = preparedStatement.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return deleteResult;
+        userToBankRepository.deleteByUserId(id);
+        return jdbcTemplate.update(DELETE_SQL, id) > 0;
     }
 
     @Override
     public boolean existById(Long id) {
-        boolean isExists = false;
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(EXIST_BY_ID_SQL)) {
-            preparedStatement.setLong(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                isExists = resultSet.getBoolean(1);
-            }
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
+        try {
+            return jdbcTemplate.queryForObject(EXIST_BY_ID_SQL, Boolean.class, id);
+        } catch (Exception e) {
+            throw new RepositoryException(String.valueOf(e));
         }
-        return isExists;
     }
 }

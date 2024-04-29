@@ -1,16 +1,13 @@
-package org.rest.model;
+package org.rest.servlet.city.dto;
 
-public class City {
-
+public class CityOutGoingDto {
     private Long id;
-
-
     private String name;
 
-    public City() {
+    public CityOutGoingDto() {
     }
 
-    public City(Long id, String name) {
+    public CityOutGoingDto(Long id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -18,7 +15,6 @@ public class City {
     public Long getId() {
         return id;
     }
-
 
     public String getName() {
         return name;
@@ -32,3 +28,4 @@ public class City {
         this.name = name;
     }
 }
+

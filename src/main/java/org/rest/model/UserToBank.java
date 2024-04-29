@@ -19,7 +19,11 @@ public class UserToBank {
             return id;
         }
 
-        public Long getUserId() {
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+    public Long getUserId() {
             return userId;
         }
 
@@ -34,4 +38,5 @@ public class UserToBank {
         public void setBankId(Long bankId) {
             this.bankId = bankId;
         }
+
 }

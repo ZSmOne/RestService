@@ -3,23 +3,21 @@ package org.rest.service.impl;
 import org.rest.exception.NotFoundException;
 import org.rest.model.User;
 import org.rest.repository.UserRepository;
-import org.rest.repository.impl.UserRepositoryImpl;
 import org.rest.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class UserServiceImpl implements UserService {
-    private UserRepository userRepository = UserRepositoryImpl.getInstance();
-    private static UserService instance;
-    private UserServiceImpl() {
+    private final UserRepository userRepository;
+
+    @Autowired
+    private UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    public static synchronized UserService getInstance() {
-        if (instance == null) {
-            instance = new UserServiceImpl();
-        }
-        return instance;
-    }
     @Override
     public User save(User user) {
         user = userRepository.save(user);

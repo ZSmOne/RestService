@@ -5,15 +5,15 @@ import java.util.List;
 public class Bank {
     private Long id;
     private String name;
-    private List<User> usersList;
+    private List<User> userList;
 
     public Bank() {
     }
 
-    public Bank(Long id, String name, List<User> usersList) {
+    public Bank(Long id, String name, List<User> userList) {
         this.id = id;
         this.name = name;
-        this.usersList = usersList;
+        this.userList = userList;
     }
 
     public Long getId() {
@@ -24,15 +24,19 @@ public class Bank {
         return name;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
 
-    public List<User> getUsersList() {
-        return usersList;
+    public List<User> getUserList() {
+        return userList;
     }
 
-    public void setUsersList(List<User> usersList) {
-        this.usersList = usersList;
+    public void setUserList(List<User> userList) {
+        this.userList = userList;
     }
 }

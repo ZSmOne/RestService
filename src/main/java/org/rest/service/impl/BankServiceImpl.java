@@ -6,25 +6,29 @@ import org.rest.model.UserToBank;
 import org.rest.repository.BankRepository;
 import org.rest.repository.UserRepository;
 import org.rest.repository.UserToBankRepository;
-import org.rest.repository.impl.BankRepositoryImpl;
-import org.rest.repository.impl.UserRepositoryImpl;
-import org.rest.repository.impl.UserToBankRepositoryImpl;
 import org.rest.service.BankService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-
+@Service
 public class BankServiceImpl implements BankService {
 
-    private BankRepository bankRepository = BankRepositoryImpl.getInstance();
-    private UserRepository userRepository = UserRepositoryImpl.getInstance();
-
-    private UserToBankRepository userToBankRepository = UserToBankRepositoryImpl.getInstance();
-
+    private BankRepository bankRepository;
+    private UserRepository userRepository;
+    private UserToBankRepository userToBankRepository;
     private static BankService instance;
 
 
     private BankServiceImpl() {
+    }
+    @Autowired
+    private BankServiceImpl(BankRepository bankRepository, UserRepository userRepository, UserToBankRepository userToBankRepository) {
+        this.bankRepository = bankRepository;
+        this.userRepository = userRepository;
+        this.userToBankRepository = userToBankRepository;
+
     }
 
     public static synchronized BankService getInstance() {

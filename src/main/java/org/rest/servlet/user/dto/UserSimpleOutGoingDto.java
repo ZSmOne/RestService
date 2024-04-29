@@ -1,16 +1,14 @@
-package org.rest.model;
+package org.rest.servlet.user.dto;
 
-public class City {
-
+public class UserSimpleOutGoingDto {
     private Long id;
-
-
     private String name;
 
-    public City() {
+
+    public UserSimpleOutGoingDto() {
     }
 
-    public City(Long id, String name) {
+    public UserSimpleOutGoingDto(Long id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -18,7 +16,6 @@ public class City {
     public Long getId() {
         return id;
     }
-
 
     public String getName() {
         return name;

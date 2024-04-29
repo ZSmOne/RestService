@@ -1,8 +1,5 @@
 package org.rest.model;
 
-import org.rest.repository.UserToBankRepository;
-import org.rest.repository.impl.UserToBankRepositoryImpl;
-
 import java.util.List;
 
 public class User {
@@ -10,7 +7,6 @@ public class User {
     private String name;
     private City city;
     private List<Bank> bankList;
-    private static final UserToBankRepository userToBankRepository = UserToBankRepositoryImpl.getInstance();
 
     public User() {
     }
@@ -36,6 +32,10 @@ public class User {
 
     public City getCity() {
         return city;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public void setCity(City city) {

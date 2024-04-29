@@ -1,14 +1,13 @@
-DROP TABLE IF EXISTS users_banks;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS cities;
-DROP TABLE IF EXISTS banks;
+DROP TABLE IF EXISTS users_banks CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS cities CASCADE;
+DROP TABLE IF EXISTS banks CASCADE;
 
 -- Создание таблицы "cities"
 CREATE TABLE IF NOT EXISTS cities (
     city_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     city_name VARCHAR(100)
 );
-
 -- Создание таблицы "banks"
 CREATE TABLE IF NOT EXISTS banks (
     bank_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -35,6 +34,8 @@ INSERT INTO cities (city_name) VALUES
 ('Moscow'),
 ('St. Petersburg'),
 ('Novgorod');
+
+
 
 -- Наполнение таблицы "banks"
 INSERT INTO banks (bank_name) VALUES

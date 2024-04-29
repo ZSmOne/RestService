@@ -3,22 +3,18 @@ package org.rest.service.impl;
 import org.rest.exception.NotFoundException;
 import org.rest.model.City;
 import org.rest.repository.CityRepository;
-import org.rest.repository.impl.CityRepositoryImpl;
 import org.rest.service.CityService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class CityServiceImpl implements CityService {
-    private CityRepository cityRepository = CityRepositoryImpl.getInstance();
-    private static CityService instance;
-    private CityServiceImpl() {
-    }
-
-    public static synchronized CityService getInstance() {
-        if (instance == null) {
-            instance = new CityServiceImpl();
-        }
-        return instance;
+    private final CityRepository cityRepository;
+    @Autowired
+    private CityServiceImpl(CityRepository cityRepository) {
+        this.cityRepository = cityRepository;
     }
 
     @Override

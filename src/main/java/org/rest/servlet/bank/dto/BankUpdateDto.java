@@ -1,16 +1,13 @@
-package org.rest.model;
+package org.rest.servlet.bank.dto;
 
-public class City {
-
+public class BankUpdateDto {
     private Long id;
-
-
     private String name;
 
-    public City() {
+    public BankUpdateDto() {
     }
 
-    public City(Long id, String name) {
+    public BankUpdateDto(Long id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -18,7 +15,6 @@ public class City {
     public Long getId() {
         return id;
     }
-
 
     public String getName() {
         return name;

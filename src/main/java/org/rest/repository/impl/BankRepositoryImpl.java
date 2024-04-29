@@ -1,16 +1,18 @@
 package org.rest.repository.impl;
 
-import org.rest.db.ConnectionManager;
-import org.rest.db.ConnectionManagerImpl;
-import org.rest.exception.RepositoryException;
 import org.rest.model.Bank;
 import org.rest.repository.BankRepository;
 import org.rest.repository.UserToBankRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class BankRepositoryImpl implements BankRepository {
 
     private static final String SAVE_SQL = """
@@ -42,110 +44,56 @@ public class BankRepositoryImpl implements BankRepository {
                         LIMIT 1);
             """;
 
-    private ConnectionManager connectionManager = ConnectionManagerImpl.getInstance();
-    private final UserToBankRepository userToBankRepository = UserToBankRepositoryImpl.getInstance();
-    private static BankRepository instance;
+    private final UserToBankRepository userToBankRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-
-    public BankRepositoryImpl() {
+    @Autowired
+    public BankRepositoryImpl(UserToBankRepository userToBankRepository, JdbcTemplate jdbcTemplate) {
+        this.userToBankRepository = userToBankRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public BankRepositoryImpl(String url,String username, String password){
-        connectionManager = new ConnectionManagerImpl(url, username, password);
-    }
-
-    public static synchronized BankRepository getInstance() {
-        if (instance == null) {
-            instance = new BankRepositoryImpl();
-        }
-        return instance;
-    }
     @Override
     public Bank save(Bank bank) {
-        try(Connection connection = connectionManager.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)){
-            preparedStatement.setString(1, bank.getName());
-            preparedStatement.executeUpdate();
-            ResultSet resultSet = preparedStatement.getGeneratedKeys();
-            if (resultSet.next())
-                bank = new Bank(resultSet.getLong("bank_id"), bank.getName(), null);
-        }catch (SQLException e){
-            throw new RepositoryException(e);
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(SAVE_SQL, new String[]{"bank_id"});
+            ps.setString(1, bank.getName());
+            return ps;
+        }, keyHolder);
+        Long id = keyHolder.getKey().longValue();
+        bank.setId(id);
         return bank;
     }
 
     @Override
     public void update(Bank bank) {
-        try(Connection connection = connectionManager.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)){
-            preparedStatement.setString(1, bank.getName());
-            preparedStatement.setLong(2, bank.getId());
-            preparedStatement.executeUpdate();
-        }catch (SQLException e){
-            throw new RepositoryException(e);
-        }
+        jdbcTemplate.update(UPDATE_SQL, bank.getName(), bank.getId());
     }
 
     @Override
     public Bank findById(Long id) {
-        Bank bank = null;
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)){
-            preparedStatement.setLong(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                bank = new Bank(resultSet.getLong("bank_id"), resultSet.getString("bank_name"), null);
-
-            }
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return bank;
+        return jdbcTemplate.queryForObject(FIND_BY_ID_SQL, (rs, rowNum) ->
+                new Bank(rs.getLong("bank_id"), rs.getString("bank_name"),
+                        userToBankRepository.findUsersByBankId(rs.getLong("bank_id"))), id);
     }
 
     @Override
     public boolean deleteById(Long id) {
-        boolean deleteResult;
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_SQL)){
-            userToBankRepository.deleteByUserId(id);
-            preparedStatement.setLong(1, id);
-            deleteResult = preparedStatement.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return deleteResult;
+        userToBankRepository.deleteByBankId(id);
+        return jdbcTemplate.update(DELETE_SQL, id) > 0;
     }
 
     @Override
     public List<Bank> findAll() {
-        List<Bank> bankList = new ArrayList<>();
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(FIND_ALL_SQL)){
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next())
-                bankList.add(new Bank(resultSet.getLong("bank_id"), resultSet.getString("bank_name"), null));
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return bankList;
+        return jdbcTemplate.query(FIND_ALL_SQL, (rs, rowNum) ->
+                new Bank(rs.getLong("bank_id"), rs.getString("bank_name"),
+                        userToBankRepository.findUsersByBankId(rs.getLong("bank_id"))));
     }
 
     @Override
     public boolean existById(Long id) {
-        boolean isExists = false;
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(EXIST_BY_ID_SQL)){
-            preparedStatement.setLong(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                isExists = resultSet.getBoolean(1);
-            }
-        } catch (SQLException e) {
-            throw new RepositoryException(e);
-        }
-        return isExists;
+        return jdbcTemplate.queryForObject(EXIST_BY_ID_SQL, Boolean.class, id);
     }
 }
 
