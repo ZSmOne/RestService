@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS cities (
     city_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     city_name VARCHAR(100)
 );
+
+
 -- Создание таблицы "banks"
 CREATE TABLE IF NOT EXISTS banks (
     bank_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -52,8 +54,8 @@ INSERT INTO users (user_name, city_id) VALUES
 
 -- Наполнение таблицы "users_banks"
 INSERT INTO users_banks (user_id, bank_id) VALUES
-(1, 1), -- Alice в Chase Bank
-(2, 2), -- Bob в Bank of America
-(3, 3), -- Charlie в Wells Fargo
-(1, 2), -- Alice также в Bank of America
-(2, 4); -- Alice также в Bank of America
+(1, 1),
+(2, 2),
+(3, 3),
+(1, 2),
+(2, 4);

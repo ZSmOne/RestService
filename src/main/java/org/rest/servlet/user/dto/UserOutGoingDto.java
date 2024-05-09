@@ -31,16 +31,17 @@ public class UserOutGoingDto {
     }
 
 
-    public CityOutGoingDto getCity() {
-        return city;
-    }
-
     public void setId(Long id) {
         this.id = id;
     }
 
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CityOutGoingDto getCity() {
+        return city;
     }
 
     public void setCity(CityOutGoingDto city) {

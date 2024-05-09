@@ -1,57 +1,60 @@
 package org.rest.service.impl;
 
-import org.rest.exception.NotFoundException;
+import org.rest.model.City;
 import org.rest.model.User;
-import org.rest.repository.UserRepository;
+import org.rest.repository.UserCrudRepository;
 import org.rest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
+    private final UserCrudRepository userCrudRepository;
+    private final CityServiceImpl cityServiceImpl;
 
     @Autowired
-    private UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    @Override
-    public User save(User user) {
-        user = userRepository.save(user);
-        return user;
-    }
-
-    @Override
-    public User findById(Long userId) throws NotFoundException {
-        User user = userRepository.findById(userId);
-        if (user == null)
-            throw new NotFoundException("User not found.");
-        return user;
-    }
-
-    @Override
-    public List<User> findAll() {
-        return userRepository.findAll();    }
-
-    @Override
-    public void update(User user) throws NotFoundException {
-        isExistUser(user.getId());
-        userRepository.update(user);
-    }
-
-    @Override
-    public boolean delete(Long userId) throws NotFoundException {
-        isExistUser(userId);
-        return userRepository.deleteById(userId);
+    public UserServiceImpl(CityServiceImpl cityServiceImpl, UserCrudRepository userCrudRepository) {
+        this.userCrudRepository = userCrudRepository;
+        this.cityServiceImpl = cityServiceImpl;
     }
 
 
-    private void isExistUser(Long userId) throws NotFoundException {
-        if (!userRepository.existById(userId)) {
-            throw new NotFoundException("User not found.");
+    @Override
+    public User save(User user){
+        return userCrudRepository.save(user);
+    }
+
+    @Override
+    public User findById(Long id){
+        return userCrudRepository.findById(id).orElseThrow(() -> new IllegalStateException("no such bank"));
+    }
+
+    @Override
+    public List<User> findAll(){
+        Iterable<User> iterable = userCrudRepository.findAll();
+        return StreamSupport.stream(iterable.spliterator(), false)
+                .toList();
+    }
+
+    @Override
+    public void update(User user) {
+        if (userCrudRepository.existsById(user.getId())) {
+            City city = cityServiceImpl.findById (user.getCity().getId());
+            user.setCity(city);
+            userCrudRepository.save(user);
         }
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (userCrudRepository.existsById(id))
+            userCrudRepository.deleteById(id);
+    }
+
+    public User getUser(Long id) {
+        return userCrudRepository.findById(id).orElseThrow(() -> new IllegalStateException("User not found"));
     }
 }

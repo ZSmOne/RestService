@@ -1,107 +1,71 @@
 package org.rest.service.impl;
 
-import org.rest.exception.NotFoundException;
 import org.rest.model.Bank;
-import org.rest.model.UserToBank;
-import org.rest.repository.BankRepository;
-import org.rest.repository.UserRepository;
-import org.rest.repository.UserToBankRepository;
+import org.rest.model.User;
+import org.rest.repository.BankCrudRepository;
 import org.rest.service.BankService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 @Service
 public class BankServiceImpl implements BankService {
+    private final BankCrudRepository bankCrudRepository;
+    private final UserServiceImpl userServiceImpl;
 
-    private BankRepository bankRepository;
-    private UserRepository userRepository;
-    private UserToBankRepository userToBankRepository;
-    private static BankService instance;
-
-
-    private BankServiceImpl() {
-    }
     @Autowired
-    private BankServiceImpl(BankRepository bankRepository, UserRepository userRepository, UserToBankRepository userToBankRepository) {
-        this.bankRepository = bankRepository;
-        this.userRepository = userRepository;
-        this.userToBankRepository = userToBankRepository;
-
-    }
-
-    public static synchronized BankService getInstance() {
-        if (instance == null) {
-            instance = new BankServiceImpl();
-        }
-        return instance;
+    public BankServiceImpl(BankCrudRepository bankCrudRepository, UserServiceImpl userServiceImpl) {
+        this.bankCrudRepository = bankCrudRepository;
+        this.userServiceImpl = userServiceImpl;
     }
 
     @Override
-    public Bank save(Bank bank) {
-        bank = bankRepository.save(bank);
-        return bank;
-    }
-
-    @Override
-    public Bank findById(Long bankId) throws NotFoundException {
-        Bank bank = bankRepository.findById(bankId);
-        if (bank == null)
-            throw new NotFoundException("Bank not found.");
-        return bank;
+    public Bank findById(Long id){
+        return bankCrudRepository.findById(id).orElseThrow(() -> new IllegalStateException("Bank not found"));
     }
 
     @Override
     public List<Bank> findAll() {
-        return bankRepository.findAll();
+        Iterable<Bank> iterable = bankCrudRepository.findAll();
+        return StreamSupport.stream(iterable.spliterator(), false)
+                .toList();    }
+
+    @Override
+    public Bank save(Bank bank) {
+        return bankCrudRepository.save(bank);
     }
 
     @Override
-    public void update(Bank bank) throws NotFoundException {
-        isBankExists(bank.getId());
-        bankRepository.update(bank);
+    public void update(Bank bank) {
+        if (bankCrudRepository.existsById(bank.getId())) {
+            bankCrudRepository.save(bank);
+        }
     }
 
     @Override
-    public boolean delete(Long bankId) throws NotFoundException {
-        isBankExists(bankId);
-        return bankRepository.deleteById(bankId);
+    public void delete(Long id) {
+        if (bankCrudRepository.existsById(id))
+            bankCrudRepository.deleteById(id);
     }
-    @Override
-    public void addUserToBank(Long userId, Long bankId) throws NotFoundException {
-        isExistUser(userId);
-        if (bankRepository.existById(bankId)) {
-            UserToBank userToBank = new UserToBank(null, userId, bankId);
-            userToBankRepository.save(userToBank);
+
+    public Bank addUserToBank(Long bankId, Long userId) {
+        Bank bank = bankCrudRepository.findById(bankId).orElseThrow(() -> new IllegalStateException("Bank not found"));
+        User user = userServiceImpl.getUser(userId);
+        bank.getUserList().add(user);
+        bankCrudRepository.save(bank);
+        return bank;
+    }
+
+    public void deleteUserToBank(Long bankId, Long userId) {
+        Bank bank = bankCrudRepository.findById(bankId).orElseThrow(() -> new IllegalStateException("Bank not found"));
+        if (userServiceImpl.getUser(userId) != null) {
+            bank.getUserList().removeIf(u -> Objects.equals(u.getId(), userId));
+            bankCrudRepository.save(bank);
         } else {
-            throw new NotFoundException("Bank not found.");
-        }
-    }
-
-    @Override
-    public void deleteUserToBank(Long userId, Long bankId) throws NotFoundException {
-        isExistUser(userId);
-        if (bankRepository.existById(bankId)) {
-            UserToBank userToBank = userToBankRepository.findByUserIdAndBankId(userId, bankId);
-            if (userToBank == null)
-                throw new NotFoundException("User with this bank not found.");
-
-            userToBankRepository.deleteById(userToBank.getId());
-        } else {
-            throw new NotFoundException("User not found.");
-        }
-    }
-
-    private void isExistUser(Long userId) throws NotFoundException {
-        if (!userRepository.existById(userId)) {
-            throw new NotFoundException("User not found.");
-        }
-    }
-
-    private void isBankExists(Long bankId) throws NotFoundException {
-        if (!bankRepository.existById(bankId)) {
-            throw new NotFoundException("Bank not found.");
+            throw new IllegalStateException("User not found");
         }
     }
 }

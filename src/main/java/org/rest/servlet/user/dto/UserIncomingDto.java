@@ -19,12 +19,12 @@ public class UserIncomingDto {
         return name;
     }
 
-    public City getCity() {
-        return city;
-    }
-
     public void setName(String name) {
         this.name = name;
+    }
+
+    public City getCity() {
+        return city;
     }
 
     public void setCity(City city) {

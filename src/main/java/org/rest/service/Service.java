@@ -1,17 +1,16 @@
 package org.rest.service;
 
-import org.rest.exception.NotFoundException;
-
 import java.util.List;
 
-public interface Service <T, K>{
+public interface Service <T, K> {
     T save(T t);
 
-    T findById(K k) throws NotFoundException;
+    T findById(K k);
 
     List<T> findAll();
 
-    void update(T t) throws NotFoundException;
+    void update(T t);
 
-    boolean delete(K k) throws NotFoundException;
+    void delete(K k);
 }
+

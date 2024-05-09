@@ -3,7 +3,8 @@ package org.rest.util;//package org;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
-import org.rest.db.DatabaseConfig;
+import org.rest.config.DatabaseConfig;
+import org.rest.config.WebConfig;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
@@ -15,6 +16,7 @@ public class Main {
 
         AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
         context.register(DatabaseConfig.class);
+        context.register(WebConfig.class);
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(8080);
         tomcat.getConnector();

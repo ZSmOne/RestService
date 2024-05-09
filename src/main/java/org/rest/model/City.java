@@ -1,10 +1,16 @@
 package org.rest.model;
 
-public class City {
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "cities")
+public class City {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "city_id")
     private Long id;
 
-
+    @Column(name = "city_name", nullable = false)
     private String name;
 
     public City() {
@@ -18,7 +24,6 @@ public class City {
     public Long getId() {
         return id;
     }
-
 
     public String getName() {
         return name;

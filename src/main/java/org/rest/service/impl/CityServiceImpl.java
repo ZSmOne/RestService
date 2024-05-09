@@ -1,55 +1,52 @@
 package org.rest.service.impl;
 
-import org.rest.exception.NotFoundException;
 import org.rest.model.City;
-import org.rest.repository.CityRepository;
+import org.rest.repository.CityCrudRepository;
 import org.rest.service.CityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 @Service
 public class CityServiceImpl implements CityService {
-    private final CityRepository cityRepository;
+
+    private final CityCrudRepository cityCrudRepository;
+
     @Autowired
-    private CityServiceImpl(CityRepository cityRepository) {
-        this.cityRepository = cityRepository;
+    public CityServiceImpl(CityCrudRepository cityCrudRepository){
+        this.cityCrudRepository = cityCrudRepository;
     }
 
     @Override
     public City save(City city) {
-        city = cityRepository.save(city);
-        return city;
+        return cityCrudRepository.save(city);
     }
 
     @Override
-    public City findById(Long cityId) throws NotFoundException {
-        City city = cityRepository.findById(cityId);
-        if (city == null)
-            throw new NotFoundException("City not found.");
-        return city;
+    public City findById(Long id){
+        return cityCrudRepository.findById(id).orElseThrow(() -> new IllegalStateException("City not found"));
     }
 
     @Override
-    public List<City> findAll() {
-        return cityRepository.findAll();
+    public List<City> findAll(){
+        Iterable<City> iterable = cityCrudRepository.findAll();
+        return StreamSupport.stream(iterable.spliterator(), false)
+                .toList();
     }
 
     @Override
-    public void update(City city) throws NotFoundException {
-        isCityExists(city.getId());
-        cityRepository.update(city);
+    public void update(City city) {
+        if (cityCrudRepository.existsById(city.getId()))
+            cityCrudRepository.save(city);
     }
 
     @Override
-    public boolean delete(Long cityId) throws NotFoundException {
-        isCityExists(cityId);
-        return cityRepository.deleteById(cityId);
-    }
-    private void isCityExists(Long cityId) throws NotFoundException {
-        if (!cityRepository.existById(cityId)) {
-            throw new NotFoundException("City not found.");
+    public void delete(Long id) {
+        if (cityCrudRepository.existsById(id)){
+        cityCrudRepository.deleteCityFromUsers(id);
+        cityCrudRepository.deleteById(id);
         }
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.rest.exception.NotFoundException;
 import org.rest.model.City;
-import org.rest.service.CityService;
+import org.rest.service.impl.CityServiceImpl;
 import org.rest.servlet.city.dto.CityIncomingDto;
 import org.rest.servlet.city.dto.CityOutGoingDto;
 import org.rest.servlet.city.dto.CityUpdateDto;
@@ -20,32 +20,19 @@ import java.util.List;
 @RequestMapping("/city")
 public class CityController {
 
-    private final CityService cityService;
+    private final CityServiceImpl cityServiceImpl;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public CityController(CityService cityService) {
-        this.cityService = cityService;
+    public CityController(CityServiceImpl cityServiceImpl) {
+        this.cityServiceImpl = cityServiceImpl;
         this.objectMapper = new ObjectMapper();
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<String> getAllCities() {
-        List<City> cities = cityService.findAll();
-        List<CityOutGoingDto> cityOutGoingDtos = cities.stream()
-                .map(CityMapper.INSTANCE::cityToCityOutGoingDto)
-                .toList();
-        try {
-            String citiesJson = objectMapper.writeValueAsString(cityOutGoingDtos);
-            return ResponseEntity.ok(citiesJson);
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing JSON");
-        }
-    }
     @GetMapping("{cityId}")
     public ResponseEntity<String> getCity(@PathVariable("cityId") Long cityId) {
         try {
-            City city = cityService.findById(cityId);
+            City city = cityServiceImpl.findById(cityId);
             CityOutGoingDto cityOutGoingDto = CityMapper.INSTANCE.cityToCityOutGoingDto(city);
             String cityJson = objectMapper.writeValueAsString(cityOutGoingDto);
             return ResponseEntity.ok(cityJson);
@@ -53,13 +40,24 @@ public class CityController {
             return ResponseEntity.notFound().build();
         }
     }
-
-    @PostMapping
-    public ResponseEntity<String> createCity(@RequestBody String json){
+    @GetMapping("/all")
+    public ResponseEntity<String> getAllCities() {
         try {
-            CityIncomingDto cityIncomingDto = objectMapper.readValue(json, CityIncomingDto.class);
+            List<City> cities = cityServiceImpl.findAll();
+            List<CityOutGoingDto> cityOutGoingDtoList = cities.stream()
+                    .map(CityMapper.INSTANCE::cityToCityOutGoingDto)
+                    .toList();
+            String citiesJson = objectMapper.writeValueAsString(cityOutGoingDtoList);
+            return ResponseEntity.ok(citiesJson);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing JSON");
+        }
+    }
+    @PostMapping
+    public ResponseEntity<String> createCity(@RequestBody CityIncomingDto cityIncomingDto){
+        try {
             City city = CityMapper.INSTANCE.cityIncomingDtoToCity(cityIncomingDto);
-            city = cityService.save(city);
+            city = cityServiceImpl.save(city);
             CityOutGoingDto savedCityDto = CityMapper.INSTANCE.cityToCityOutGoingDto(city);
             String cityJson = objectMapper.writeValueAsString(savedCityDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(cityJson);
@@ -69,30 +67,30 @@ public class CityController {
     }
 
     @PutMapping
-    public ResponseEntity<String> updateCity(@RequestBody String json) {
+    public ResponseEntity<String> updateCity(@RequestBody CityUpdateDto cityUpdateDto) {
         try {
-         CityUpdateDto cityUpdateDto = objectMapper.readValue(json, CityUpdateDto.class);
-           City city = CityMapper.INSTANCE.cityUpdateDtoToCity(cityUpdateDto);
-           cityService.update(city);
-           return ResponseEntity.ok().build();
-       } catch (NotFoundException e) {
-           return ResponseEntity.notFound().build();
-     } catch (IllegalArgumentException | JsonProcessingException e) {
-         return ResponseEntity.badRequest().build();
+            City city = CityMapper.INSTANCE.cityUpdateDtoToCity(cityUpdateDto);
+            cityServiceImpl.update(city);
+            return ResponseEntity.ok().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
-@DeleteMapping("/{cityId}")
-public ResponseEntity<Void> deleteCity(@PathVariable("cityId") Long cityId) {
-    try {
-        cityService.delete(cityId);
-        return ResponseEntity.noContent().build();
-    } catch (NotFoundException e) {
-        return ResponseEntity.notFound().build();
-    } catch (IllegalArgumentException e) {
-        return ResponseEntity.badRequest().build();
+    @DeleteMapping("/{cityId}")
+    public ResponseEntity<Void> deleteCity(@PathVariable("cityId") Long cityId) {
+        try {
+            cityServiceImpl.delete(cityId);
+            return ResponseEntity.noContent().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
-}
-}
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<String> handle(Throwable e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 
-
+}

@@ -1,11 +1,25 @@
 package org.rest.model;
 
+import jakarta.persistence.*;
+
 import java.util.List;
 
+@Entity
+@Table(name = "banks")
 public class Bank {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "bank_id")
     private Long id;
+    @Column(name = "bank_name", nullable = false)
     private String name;
-    private List<User> userList;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, targetEntity = User.class)
+    @JoinTable(
+            name = "users_banks",
+            joinColumns = @JoinColumn(name = "bank_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    public List<User> userList;
 
     public Bank() {
     }
