@@ -108,6 +108,6 @@ public class BankController {
 
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<String> handle(Throwable e) {
-        return ResponseEntity.badRequest().body("Bad request.");
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

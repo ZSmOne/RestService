@@ -62,6 +62,14 @@ class UserControllerTest {
     }
 
     @Test
+    void testGetAllUsers_NotFound() {
+        when(userService.findAll()).thenThrow(new NotFoundException("User not found"));
+        ResponseEntity<String> response = userController.getAllUsers();
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+
+    @Test
     void testCreateUser() {
         User user = new User(1L, "Test User", null, null);
         UserIncomingDto userDto = new UserIncomingDto("Test User", null);
@@ -100,5 +108,13 @@ class UserControllerTest {
         doThrow(new NotFoundException("User not found")).when(userService).delete(userId);
         ResponseEntity<String> response = userController.deleteUser(userId);
         Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+    @Test
+    void testHandle() {
+        Throwable exception = new Throwable("Test exception");
+        ResponseEntity<String> response = userController.handle(exception);
+
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals("Test exception", response.getBody());
     }
 }

@@ -64,8 +64,6 @@ public class BankServiceImpl implements BankService {
         if (userServiceImpl.getUser(userId) != null) {
             bank.getUserList().removeIf(u -> Objects.equals(u.getId(), userId));
             bankCrudRepository.save(bank);
-        } else {
-            throw new IllegalStateException("User not found");
         }
     }
 }

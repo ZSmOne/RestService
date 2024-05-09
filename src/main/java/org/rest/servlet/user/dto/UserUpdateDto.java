@@ -24,7 +24,6 @@ public class UserUpdateDto {
         return name;
     }
 
-
     public CityUpdateDto getCity() {
         return city;
     }

@@ -8,8 +8,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.rest.exception.NotFoundException;
 import org.rest.model.Bank;
+import org.rest.model.User;
 import org.rest.service.impl.BankServiceImpl;
 import org.rest.servlet.bank.dto.BankIncomingDto;
+import org.rest.servlet.bank.dto.BankOutGoingDto;
 import org.rest.servlet.bank.dto.BankUpdateDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,16 @@ class BankControllerTest {
     }
 
     @Test
+    void testGetBankById_NotFound() {
+        Long bankId = 1L;
+        when(bankService.findById(bankId)).thenThrow(new NotFoundException("Bank not found"));
+        ResponseEntity<String> response = bankController.getBankById(bankId);
+
+        verify(bankService, times(1)).findById(bankId);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
     void testGetAllBanks() {
         List<Bank> banks = new ArrayList<>();
         banks.add(new Bank(1L, "Bank 1", null));
@@ -50,6 +62,13 @@ class BankControllerTest {
         when(bankService.findAll()).thenReturn(banks);
         ResponseEntity<String> response = bankController.getAllUsers();
         Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void testGetAllBanks_NotFound() throws NotFoundException {
+        when(bankService.findAll()).thenThrow(new NotFoundException("Bank not found"));
+        ResponseEntity<String> response = bankController.getAllUsers();
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
@@ -71,13 +90,33 @@ class BankControllerTest {
     }
 
     @Test
-    void testAddUserToBank() {
+    void tesDeleteUserToBank() {
         Long bankId = 1L;
         Long userId = 1L;
         doNothing().when(bankService).deleteUserToBank(bankId, userId);
         ResponseEntity<String> response = bankController.deleteUserToBank(userId, bankId);
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
+    @Test
+    void testAddUserToBank() {
+        Long userId = 1L;
+        Long bankId = 1L;
+
+        Bank bankAfter = new Bank();
+        User user = new User();
+        user.setId(userId);
+        bankAfter.setUserList(new ArrayList<>());
+        bankAfter.getUserList().add(user);
+
+        when(bankService.addUserToBank(bankId, userId)).thenReturn(bankAfter);
+
+        BankOutGoingDto result = bankController.addUserToBank(userId, bankId);
+        verify(bankService, times(1)).addUserToBank(bankId, userId);
+        assertEquals(bankAfter.getId(), result.getId());
+        assertEquals(bankAfter.getName(), result.getName());
+        assertEquals(bankAfter.getUserList().size(), result.getUserList().size());
+    }
+
 
     @Test
     void testDeleteUserToBank_NotFound() {
@@ -94,5 +133,13 @@ class BankControllerTest {
         doThrow(new NotFoundException("Bank not found")).when(bankService).delete(bankId);
         ResponseEntity<String> response = bankController.deleteBank(bankId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+    @Test
+    void testHandle() {
+        Throwable exception = new Throwable("Test exception");
+        ResponseEntity<String> response = bankController.handle(exception);
+
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals("Test exception", response.getBody());
     }
 }

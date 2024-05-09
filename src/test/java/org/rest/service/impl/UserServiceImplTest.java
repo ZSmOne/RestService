@@ -78,4 +78,15 @@ class UserServiceImplTest {
         userService.delete(1L);
         verify(userRepository, times(1)).deleteById(1L);
     }
+    @Test
+    void testGetUser_Success() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        User result = userService.getUser(userId);
+
+        verify(userRepository, times(1)).findById(userId);
+        Assertions.assertEquals(user, result);
+    }
 }

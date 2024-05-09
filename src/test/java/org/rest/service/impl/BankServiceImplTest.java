@@ -93,4 +93,26 @@ class BankServiceImplTest {
         verify(userService, times(1)).getUser(1L);
         Assertions.assertTrue(updatedBank.getUserList().contains(user));
     }
+
+    @Test
+    void testDeleteUserToBank_Success() {
+        List<User> userList = new ArrayList<>();
+        Bank bank = new Bank();
+        bank.setId(1L);
+        User user = new User();
+        userList.add(user);
+        user.setId(1L);
+        bank.setUserList(userList);
+
+        when(userService.getUser(1L)).thenReturn(user);
+        when(bankRepository.findById(1L)).thenReturn(java.util.Optional.of(bank));
+        bankService.deleteUserToBank(1L, 1L);
+
+        verify(bankRepository, times(1)).findById(1L);
+        verify(userService, times(1)).getUser(1L);
+
+        Assertions.assertFalse(bank.getUserList().contains(user));
+        verify(bankRepository, times(1)).save(bank);
+    }
+
 }

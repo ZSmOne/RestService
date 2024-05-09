@@ -70,7 +70,6 @@ class BankCrudRepositoryTest extends TestDatabaseHelper{
         Boolean expectedValue = false;
         int expectedSize = StreamSupport.stream(bankRepository.findAll().spliterator(), false)
                 .toList().size();
-                //bankRepository.findAll().size();
         Bank bank = new Bank(null, "New bank", List.of());
         bank = bankRepository.save(bank);
         int resultSizeBefore = StreamSupport.stream(bankRepository.findAll().spliterator(), false)

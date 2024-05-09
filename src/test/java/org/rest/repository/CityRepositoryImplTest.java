@@ -20,8 +20,6 @@ class CityRepositoryImplTest extends TestDatabaseHelper {
     @Autowired
     public  CityCrudRepository cityRepository;
 
-
-
     @Test
     void save() {
         City city = new City(null, "New York");

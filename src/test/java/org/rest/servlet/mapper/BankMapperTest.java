@@ -21,14 +21,17 @@ class BankMapperTest {
 
     @Test
     void testBankIncomingDtoToBank() {
-        BankIncomingDto dto = new BankIncomingDto("Test Bank");
+        BankIncomingDto dto = new BankIncomingDto();
+        dto.setName("Test Bank");
         Bank bank = BankMapper.INSTANCE.bankIncomingDtoToBank(dto);
         assertEquals(dto.getName(), bank.getName());
     }
 
     @Test
     void testBankUpdateDtoToBank() {
-        BankUpdateDto dto = new BankUpdateDto(1L, "Updated Bank");
+        BankUpdateDto dto = new BankUpdateDto();
+        dto.setId(1L);
+        dto.setName("Updated Bank");
         Bank bank = BankMapper.INSTANCE.bankUpdateDtoToBank(dto);
         assertEquals(dto.getId(), bank.getId());
         assertEquals(dto.getName(), bank.getName());

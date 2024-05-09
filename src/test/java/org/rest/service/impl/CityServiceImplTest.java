@@ -90,7 +90,6 @@ class CityServiceImplTest {
     @Test
     void testDeleteCity() throws NotFoundException {
         when(cityRepository.existsById(1L)).thenReturn(true);
-        //when(cityRepository.deleteById(1L)).thenReturn(true);
         cityService.delete(1L);
         verify(cityRepository, times(1)).deleteById(1L);
     }

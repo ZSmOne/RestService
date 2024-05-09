@@ -23,7 +23,9 @@ class CityMapperTest {
 
     @Test
     void testCityUpdateDtoToCity() {
-        CityUpdateDto dto = new CityUpdateDto(1L, "Updated City");
+        CityUpdateDto dto = new CityUpdateDto();
+        dto.setId(1L);
+        dto.setName("Updated City");
         City city = CityMapper.INSTANCE.cityUpdateDtoToCity(dto);
         assertEquals(dto.getId(), city.getId());
         assertEquals(dto.getName(), city.getName());

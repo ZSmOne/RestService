@@ -16,7 +16,6 @@ import java.util.stream.StreamSupport;
 
 @ExtendWith(SpringExtension.class)
 class UserRepositoryImplTest extends TestDatabaseHelper {
-    //private static final String INIT_SQL = "sql/schema.sql";
 
     @Autowired
     public UserCrudRepository userRepository;
@@ -53,7 +52,6 @@ class UserRepositoryImplTest extends TestDatabaseHelper {
         int expectedSize = 3;
         int resultSize = StreamSupport.stream(userRepository.findAll().spliterator(), false)
                         .toList().size();
-                //userRepository.findAll().size();
 
         Assertions.assertEquals(expectedSize, resultSize);
     }

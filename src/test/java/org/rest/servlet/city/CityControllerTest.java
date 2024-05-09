@@ -38,19 +38,6 @@ class CityControllerTest {
         MockitoAnnotations.initMocks(this);
         objectMapper = new ObjectMapper();
     }
-    @Test
-    void testGetAllCities() throws JsonProcessingException {
-    List<City> cities = new ArrayList<>();
-        cities.add(new City(1L, "City 1"));
-        cities.add(new City(2L, "City 2"));
-    when(cityService.findAll()).thenReturn(cities);
-    ResponseEntity<String> response = cityController.getAllCities();
-    Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-    String expectedJson = objectMapper.writeValueAsString(
-            cities.stream().map(CityMapper.INSTANCE::cityToCityOutGoingDto).toList()
-    );
-    Assertions.assertEquals(expectedJson, response.getBody());
-}
 
     @Test
     void testGetCity() throws JsonProcessingException, NotFoundException {
@@ -64,6 +51,20 @@ class CityControllerTest {
         );
         Assertions.assertEquals(expectedJson, response.getBody());
     }
+
+    @Test
+    void testGetAllCities() throws JsonProcessingException {
+    List<City> cities = new ArrayList<>();
+        cities.add(new City(1L, "City 1"));
+        cities.add(new City(2L, "City 2"));
+    when(cityService.findAll()).thenReturn(cities);
+    ResponseEntity<String> response = cityController.getAllCities();
+    Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+    String expectedJson = objectMapper.writeValueAsString(
+            cities.stream().map(CityMapper.INSTANCE::cityToCityOutGoingDto).toList()
+    );
+    Assertions.assertEquals(expectedJson, response.getBody());
+}
     @Test
     void testCreateCity() throws JsonProcessingException {
         City city = new City(1L, "Test City");
@@ -109,6 +110,14 @@ class CityControllerTest {
         doThrow(new NotFoundException("City not found")).when(cityService).delete(cityId);
         ResponseEntity<Void> response = cityController.deleteCity(cityId);
         Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+    @Test
+    void testHandle() {
+        Throwable exception = new Throwable("Test exception");
+        ResponseEntity<String> response = cityController.handle(exception);
+
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals("Test exception", response.getBody());
     }
 }
 
