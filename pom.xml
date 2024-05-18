@@ -96,6 +96,6 @@
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
-        </plugins>
+        </plugins><!-- test jenkins hooks -->
     </build>
 </project>
