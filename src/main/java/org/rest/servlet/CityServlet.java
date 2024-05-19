@@ -58,7 +58,7 @@ public class CityServlet extends HttpServlet {
 //                List<CityOutGoingDto> cityDtoList = cityDtoMapper.map(cityService.findAll());
                 resp.setStatus(HttpServletResponse.SC_OK);
 //                response = objectMapper.writeValueAsString(cityDtoList);
-                //response = "{\"gete\":\"test city\"}";
+                response = "{\"gete\":\"test city\"}";
             } else {
                 Long cityId = Long.parseLong(pathPart[1]);
                 CityOutGoingDto cityDto = cityDtoMapper.map(cityService.findById(cityId));
